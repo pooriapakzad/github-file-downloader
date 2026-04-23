@@ -1,0 +1,39 @@
+name: 'دانلود فایل دلخواه شما'
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_url:
+        description: '🔗 لینک مستقیم فایل مورد نظرتان را اینجا وارد کنید'
+        required: true
+        type: string
+        placeholder: 'مثال: https://example.com/file.zip'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: دریافت کدهای مخزن
+        uses: actions/checkout@v4
+
+      - name: دانلود فایل از لینک وارد شده
+        run: wget -O "downloaded_file" "${{ inputs.file_url }}"
+
+      - name: استخراج نام فایل از لینک (اختیاری)
+        id: get_filename
+        run: |
+          FILENAME=$(basename "${{ inputs.file_url }}" | sed 's/?.*//')
+          echo "filename=${FILENAME}" >> $GITHUB_OUTPUT
+
+      - name: تغییر نام فایل به نام اصلی
+        run: mv downloaded_file "${{ steps.get_filename.outputs.filename }}"
+
+      - name: متعهد شدن و ارسال فایل به مخزن
+        uses: actions-x/commit@v6
+        with:
+          files: "${{ steps.get_filename.outputs.filename }}"
+          name: "GitHub Actions"
+          email: "actions@github.com"
+          message: "اضافه کردن فایل توسط کاربر"
